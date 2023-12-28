@@ -12,8 +12,8 @@ const mainController = {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta property="og:title" content="Juanse Ferrari">
-        <meta property="og:description" content="Description">
-        <meta property="og:image" content="https://www.juanseferrari.com/juanse1.jpg">
+        <meta property="og:description" content="Programador, entusiasta y fanático del mundo Fintech.">
+        <meta property="og:image" content="https://www.juanseferrari.com/images/juanse2.png">
 
         <!-- Add more meta tags as needed -->
         <title>Juanse Ferrari</title>
@@ -41,8 +41,8 @@ const mainController = {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta property="og:title" content="Juanse Ferrari">
-        <meta property="og:description" content="Description">
-        <meta property="og:image" content="https://www.juanseferrari.com/juanse1.jpg">
+        <meta property="og:description" content="Programador, entusiasta y fanático del mundo Fintech.">
+        <meta property="og:image" content="https://www.juanseferrari.com/images/juanse2.png">
 
         <!-- Add more meta tags as needed -->
         <title>Juanse Ferrari</title>
