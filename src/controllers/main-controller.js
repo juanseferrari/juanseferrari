@@ -16,7 +16,7 @@ const mainController = {
         <meta property="og:image" content="https://www.juanseferrari.com/juanse1.jpg">
 
         <!-- Add more meta tags as needed -->
-        <title>Juanse Ferrari's Linktree</title>
+        <title>Juanse Ferrari</title>
       </head>
       <body>
         <!-- Your HTML content goes here -->
@@ -45,7 +45,7 @@ const mainController = {
         <meta property="og:image" content="https://www.juanseferrari.com/juanse1.jpg">
 
         <!-- Add more meta tags as needed -->
-        <title>Juan Segundo Ferrari's LinkedIn Profile</title>
+        <title>Juanse Ferrari</title>
       </head>
       <body>
         <!-- Your HTML content goes here -->
