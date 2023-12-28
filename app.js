@@ -3,6 +3,7 @@ const app = express()
 
 const mainRoute = require('./src/routes/main-route');
 
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', mainRoute);
 
