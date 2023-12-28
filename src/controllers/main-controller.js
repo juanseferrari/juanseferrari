@@ -60,6 +60,9 @@ const mainController = {
       </html>
     `);
   },
+  agenda: (req,res) => {
+    res.redirect("https://calendar.app.google/Gpq2QUcsDSvuMVmd6")
+  }
 };
 
 module.exports = mainController;

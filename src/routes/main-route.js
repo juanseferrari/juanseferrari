@@ -9,6 +9,7 @@ const mainController = require('../controllers/main-controller');
 router.get('/', mainController.home);
 
 router.get('/trabajo', mainController.trabajo);
+router.get('/agendar', mainController.agenda);
 
 
 
