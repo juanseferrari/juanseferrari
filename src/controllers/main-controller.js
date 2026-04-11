@@ -89,6 +89,9 @@ const mainController = {
      </html>
    `);
 
+  },
+  training: (req,res) => {
+    res.sendFile(path.join(__dirname, '..', 'ironman', 'index.html'));
   }
 };
 

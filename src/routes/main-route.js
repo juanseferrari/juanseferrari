@@ -10,6 +10,7 @@ router.get('/', mainController.home);
 
 router.get('/trabajo', mainController.trabajo);
 router.get('/agendar', mainController.agenda);
+router.get('/training', mainController.training);
 
 
 

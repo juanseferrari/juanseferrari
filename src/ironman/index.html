@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ironman 70.3 — Juan Ferrari</title>
+<style>
+  :root { --bg:#f8f8f6; --fg:#1a1a1a; --muted:#888; --line:#e5e5e5; --card:#fff; }
+  * { box-sizing: border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  nav { position:sticky; top:0; z-index:10; background:#fff;
+    border-bottom:.5px solid var(--line); height:52px; padding:0 1.5rem;
+    display:flex; align-items:center; justify-content:space-between; }
+  nav .brand { font-weight:500; font-size:15px; }
+  nav .links a { font-size:13px; color:#555; text-decoration:none; margin-left:16px; cursor:pointer; }
+  main { max-width:840px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+  h1 { font-size:26px; font-weight:500; margin:0 0 6px; }
+  h2 { font-size:19px; font-weight:500; margin:28px 0 10px; }
+  h3 { font-size:15px; font-weight:600; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 20px; }
+  .phases { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+  .phase-tab { border:.5px solid var(--line); background:#fff; padding:8px 14px;
+    border-radius:999px; cursor:pointer; font-size:13px; color:#333; }
+  .phase-tab.active { color:#fff; border-color:transparent; }
+  .phase-head { border-radius:12px; padding:18px 20px; margin-bottom:16px; }
+  .phase-head .meta { font-size:12px; opacity:.75; }
+  .phase-head h2 { margin:4px 0 10px; color:inherit; }
+  .phase-head p { margin:4px 0; font-size:13.5px; line-height:1.5; }
+  .session { background:var(--card); border:.5px solid var(--line); border-radius:10px;
+    padding:14px 16px; margin-bottom:10px; }
+  .session .row { display:flex; justify-content:space-between; gap:10px; align-items:baseline; }
+  .session .day { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  .session .meta { font-size:12px; color:var(--muted); }
+  .session p { font-size:13.5px; line-height:1.55; margin:8px 0 0; color:#333; }
+  .session .fc { display:inline-block; font-size:11.5px; color:#444; background:#f1f1ef;
+    padding:2px 8px; border-radius:999px; margin-top:6px; }
+  .tips { margin:8px 0 0; padding-left:18px; font-size:12.5px; color:#555; }
+  .tips li { margin:3px 0; }
+  .links-row { margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; }
+  .glink { font-size:11.5px; background:#eef4fb; color:#185FA5; border:0;
+    padding:3px 9px; border-radius:999px; cursor:pointer; }
+  .validate { background:#fafaf8; border:.5px dashed #d8d8d4; border-radius:10px;
+    padding:12px 16px; margin-top:12px; font-size:13px; }
+  .validate ul { margin:6px 0 0; padding-left:20px; }
+  .zones { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+    gap:8px; margin:10px 0 20px; }
+  .zone { border-radius:8px; padding:10px 12px; color:#fff; font-size:12px; }
+  .zone b { display:block; font-size:13px; margin-bottom:2px; }
+  /* modal */
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none;
+    align-items:center; justify-content:center; z-index:50; padding:1rem; }
+  .modal-bg.open { display:flex; }
+  .modal { background:#fff; border-radius:12px; max-width:560px; width:100%;
+    padding:22px 24px; max-height:80vh; overflow:auto; }
+  .modal h3 { font-size:17px; margin:0 0 10px; }
+  .modal p { white-space:pre-wrap; font-size:13.5px; line-height:1.6; color:#333; }
+  .modal .close { float:right; background:none; border:0; font-size:20px; cursor:pointer; color:#888; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">🏊🚴🏃 Ironman 70.3</span>
+  <div class="links"><a onclick="scrollTo(0,0)">Plan</a></div>
+</nav>
+<main>
+  <h1>Ironman 70.3 — Juan Ferrari</h1>
+  <p class="sub">Plan de entrenamiento · Mar 2026 – Mar 2027 · FC máx 171 lpm</p>
+
+  <h2>Zonas de frecuencia cardíaca</h2>
+  <div class="zones" id="zones"></div>
+
+  <div class="phases" id="phases"></div>
+  <div id="phaseView"></div>
+</main>
+
+<div class="modal-bg" id="modalBg" onclick="if(event.target.id==='modalBg')closeModal()">
+  <div class="modal">
+    <button class="close" onclick="closeModal()">×</button>
+    <h3 id="modalTitle"></h3>
+    <p id="modalBody"></p>
+  </div>
+</div>
+
+<script>
+const FC_MAX = 171;
+const zones = [
+  { z:"Z1", name:"Recuperación",  pct:[0,.60],   color:"#5DCAA5", desc:"Caminata rápida. Podés cantar." },
+  { z:"Z2", name:"Base aeróbica", pct:[.60,.70], color:"#378ADD", desc:"Podés hablar en oraciones." },
+  { z:"Z3", name:"Tempo",         pct:[.70,.80], color:"#EF9F27", desc:"Incómodo pero sostenible." },
+  { z:"Z4", name:"Umbral",        pct:[.80,.90], color:"#D85A30", desc:"Muy duro. Solo en intervalos." },
+  { z:"Z5", name:"Máximo",        pct:[.90,1],   color:"#E24B4A", desc:"Sprints. No podés hablar." },
+];
+const zRange = z => `${Math.round(FC_MAX*z.pct[0])}–${Math.round(FC_MAX*z.pct[1])} lpm`;
+
+const glossary = {
+  "fondo": { title:"Carrera de fondo (Z2)", body:"La carrera de fondo es la sesión más importante del plan. Consiste en correr durante un tiempo prolongado a un ritmo cómodo, donde podés mantener una conversación sin dificultad.\n\nPara vos, eso significa mantenerte en Z2: entre 103 y 120 lpm. Si tu FC sube de 120, reducí el ritmo. Si tenés que caminar al principio para no pasarte, está perfectamente bien.\n\nEl objetivo no es ir rápido, sino acumular tiempo en movimiento aeróbico. Esto desarrolla mitocondrias, mejora la eficiencia del corazón, entrena tu cuerpo a usar grasa como combustible y construye la base sobre la que después se agrega intensidad.\n\nRitmo esperado: 5:45–6:30 min/km." },
+  "strides": { title:"Strides (aceleraciones controladas)", body:"Los strides son aceleraciones cortas de 20–30 segundos al final de una carrera fácil. No son sprints, sino una progresión controlada: empezás al 70% y llegás al 90–95% de tu esfuerzo máximo, luego reducís suave.\n\nActivan el sistema neuromuscular, mejoran la eficiencia de la zancada y preparan el cuerpo para correr rápido sin acumular fatiga.\n\nCómo hacerlos: después de 50–55 min de carrera Z2, hacé 3–4 strides de 25 seg con 60–90 seg de trote suave entre cada uno." },
+  "ladrillo": { title:"Ladrillo (brick workout)", body:"Un ladrillo es la combinación de dos disciplinas en una misma sesión, sin descanso entre ellas. El más común en triatlón es bici seguido de carrera.\n\nEl objetivo es entrenar la \"transición muscular\": cuando bajás de la bici, tus piernas están acostumbradas al movimiento circular del pedaleo y de repente tienen que correr. Los primeros minutos se sienten rarísimos.\n\nEl día de la carrera el ladrillo es bici 90km → carrera 21km. Los ladrillos eliminan la sorpresa." },
+  "sweet spot": { title:"Sweet spot", body:"Intensidad entre Z3 y Z4, aproximadamente el 85–90% del umbral de lactato. El rango donde se genera la mayor adaptación aeróbica por unidad de tiempo, sin el costo de recuperación del trabajo a umbral o VO2max.\n\nEn términos de FC para vos: 130–145 lpm. Se usa en la Fase 3." },
+  "Z2 en bici": { title:"Bici en zona 2", body:"Andar en bici a Z2 es más difícil de calibrar que correr. En descensos tu FC baja, en subidas sube. El objetivo es la FC promedio de la sesión, no el pico.\n\nPara vos: 103–120 lpm durante la mayor parte de la salida. Cadencia recomendada: 85–95 RPM." },
+  "series de nado": { title:"Series de natación", body:"Repeticiones de distancias cortas con descanso entre ellas. Por ejemplo 8×100m con 20s de pausa.\n\nAl fragmentar la distancia podés mantener mejor técnica y nadar a un ritmo más alto.\n\nRitmo de referencia: 2:00–2:15 min/100m en Z2." },
+  "tempo en carrera": { title:"Carrera tempo", body:"20–40 minutos a Z3–Z4, precedida y seguida de calentamiento y enfriamiento en Z1–Z2. El tipo de entrenamiento que más mejora el umbral de lactato.\n\nPara vos en Fase 3: 15 min cal, 25–30 min Z3 (120–137 lpm), 10 min enfriamiento. Ritmo ~5:00–5:15 min/km." },
+  "fuerza tren inferior": { title:"Fuerza — tren inferior", body:"La fuerza no es opcional: es la principal herramienta de prevención de lesiones. Al correr 21km después de 90km en bici, los músculos están fatigados.\n\nFoco: sentadillas, peso muerto rumano, lunges, hip thrust, planchas, dead bugs.\n\nFases 1–2: 3×8–10 rep moderadas. Fases 3–4: 4–6 rep pesadas. Taper: mantenimiento." },
+};
+
+const phases = [
+  { id:1, name:"Base aeróbica", weeks:"Sem 1–8", months:"Mar–Abr 2026", color:"#1D9E75", light:"#E1F5EE",
+    goal:"Construir la base de las 3 disciplinas. Aprender técnica de nado. Adaptar el cuerpo al volumen.",
+    why:"El 70.3 es 90% aeróbico. Sin base sólida, las fases intensas solo lesionan. Esta es la fase más importante del plan.",
+    sessions:[
+      {day:"Lunes",label:"Natación — técnica + fondo",time:"Mañana",duration:"45 min",fc:"Z2 · 103–120 lpm",description:"15 min de técnica pura: un largo pensando en la entrada de la mano, otro en la rotación, otro en la patada. Después 25 min de nado continuo cómodo. Objetivo: 600–800m.",glossaryLinks:["series de nado"],tips:["Si te agotás, descansá en la pared y seguí.","Considerá clases de técnica las primeras 4 semanas."]},
+      {day:"Martes",label:"Carrera fondo Z2",time:"Mañana o noche",duration:"50–60 min",fc:"Z2 · 103–120 lpm · ~5:45–6:30 min/km",description:"Salida continua a ritmo completamente cómodo. Si tu FC supera 120 lpm, bajá el ritmo o caminá.",glossaryLinks:["fondo"],tips:["Salí sin música los primeros km para escuchar tu respiración."]},
+      {day:"Miércoles",label:"Bici Z2 + Fuerza",time:"Mañana + tarde",duration:"60–75 min bici + 30 min gym",fc:"Z2 · cadencia 85–95 RPM",description:"Bici a ritmo aeróbico. Tarde: sentadillas, peso muerto rumano, hip thrust, planchas. 3×10.",glossaryLinks:["Z2 en bici","fuerza tren inferior"],tips:["El gimnasio es igual de importante que la bici. No lo saltes."]},
+      {day:"Jueves",label:"Natación — fondo continuo",time:"Mañana o noche",duration:"50 min",fc:"Z2 · esfuerzo 4–5/10",description:"Nado continuo sin pausas técnicas. Empezá con 600m la semana 1 y llegá a 1000m la semana 8.",glossaryLinks:["series de nado"],tips:["Contá brazadas por largo — debería ser siempre el mismo número."]},
+      {day:"Viernes",label:"Carrera Z2 + strides",time:"Mañana",duration:"60 min",fc:"Z2 mayoría · Z4–Z5 en strides",description:"50 min de carrera Z2 + 3–4 strides al final. Cada stride: 25 seg al 90%, luego 60 seg trote suave.",glossaryLinks:["strides","fondo"],tips:["Los strides se hacen en recta.","No confundas strides con sprints."]},
+      {day:"Sábado",label:"Bici larga Z2",time:"Mañana",duration:"90–120 min",fc:"Z2 · 103–120 lpm",description:"La sesión más importante en bici. Semana 1: 90 min. Semana 8: 120 min. Importa la FC, no la velocidad.",glossaryLinks:["Z2 en bici"],tips:["Comé antes de salir.","Al menos 750ml de agua."]},
+      {day:"Domingo",label:"Descanso activo",time:"—",duration:"20 min opcional",fc:"Z1",description:"Descanso total o caminata muy suave. La adaptación ocurre en el descanso.",glossaryLinks:[],tips:["El descanso no es opcional."]},
+    ],
+    validate:["Nadar 1000m continuos sin parar (sem 8)","FC promedio en carrera < 120 lpm sostenido","Bici de 120 min sin colapso"]},
+  { id:2, name:"Construcción de volumen", weeks:"Sem 9–20", months:"May–Jul 2026", color:"#378ADD", light:"#E6F1FB",
+    goal:"Alargar las 3 disciplinas. Llegar a 2km de nado, 80km bici, 15km corriendo. Introducir ladrillos.",
+    why:"El 70.3 exige 1.9km + 90km + 21km. Hay que haber tocado esas distancias en entrenamiento.",
+    sessions:[
+      {day:"Lunes",label:"Natación — series",time:"Mañana o noche",duration:"60 min",fc:"Z2–Z3",description:"Series de 200–400m con 20–30s de pausa. Ejemplo sem 9: 5×200m. Sem 20: 4×400m.",glossaryLinks:["series de nado"],tips:["Usá pull buoy una sesión por semana.","Anotá tu tiempo por 100m."]},
+      {day:"Martes",label:"Carrera fondo Z2 progresivo",time:"Mañana",duration:"70–80 min",fc:"Z2 · últimos 15 min Z3",description:"Igual que Fase 1 pero más tiempo. Últimos 15 min podés subir a Z3. Distancia: 11–13km.",glossaryLinks:["fondo"],tips:[]},
+      {day:"Miércoles",label:"Bici Z2/Z3 + Fuerza",time:"Mañana + tarde",duration:"75–90 min bici + 30 min gym",fc:"Z2–Z3",description:"2–3 bloques de 10 min a Z3 intercalados. Gym: podés empezar a agregar carga.",glossaryLinks:["Z2 en bici","fuerza tren inferior"],tips:[]},
+      {day:"Jueves",label:"Natación fondo 1500–2000m",time:"Mañana o noche",duration:"60 min",fc:"Z2",description:"Nado continuo empujando la distancia máxima con buena técnica. Objetivo fin de fase: 2000m continuos.",glossaryLinks:["series de nado"],tips:["Cronometrá tiempo por 500m."]},
+      {day:"Viernes",label:"Carrera tempo suave",time:"Mañana",duration:"60 min",fc:"Z3 en el bloque central",description:"15 min cal, 25–30 min Z3 (~5:00–5:15 min/km), 10 min enfriamiento.",glossaryLinks:["tempo en carrera"],tips:["Si FC > 137, bajá el ritmo."]},
+      {day:"Sábado",label:"Bici larga Z2",time:"Mañana",duration:"120–150 min",fc:"Z2 · 103–120 lpm",description:"Distancia: 50–70km. Practicá comer en la bici: gel o banana cada 45–60 min.",glossaryLinks:["Z2 en bici"],tips:["Usá la ropa de ciclismo que usarás en carrera."]},
+      {day:"Domingo",label:"Ladrillo: bici + carrera",time:"Mañana",duration:"40 min bici + 20 min carrera",fc:"Z2 bici · Z2–Z3 carrera",description:"40 min bici Z2, dejá la bici, salí a correr 20 min inmediatamente. Primeros 5–8 min muy raros.",glossaryLinks:["ladrillo"],tips:["Tené todo preparado antes de salir.","No te alarmes si el ritmo es más lento."]},
+    ],
+    validate:["Bici de 80km completada","Nado de 2km continuo","Ladrillo completado sin colapso"]},
+  { id:3, name:"Intensidad específica", weeks:"Sem 21–32", months:"Ago–Oct 2026", color:"#BA7517", light:"#FAEEDA",
+    goal:"Introducir intensidad real. Consolidar ritmo de carrera objetivo. Nado a ritmo de competencia.",
+    why:"Hay que saber qué ritmo mantener el día de la carrera. Esta fase lo enseña sin sobrecargar.",
+    sessions:[
+      {day:"Lunes",label:"Natación series ritmo carrera",time:"Mañana",duration:"65 min",fc:"Z3 en series",description:"Series de 400m a ritmo objetivo (~1:55–2:05/100m). Ejemplo: 4×400m con 20s pausa.",glossaryLinks:["series de nado"],tips:["Si podés, hacé una sesión mensual en aguas abiertas."]},
+      {day:"Martes",label:"Carrera con intervalos",time:"Mañana",duration:"70 min",fc:"Z4 en bloques · hasta 154 lpm",description:"15 min cal Z2, 5×5 min Z4 con 3 min Z2 entre cada uno, 10 min enfriamiento. Ritmo: ~4:40–4:55/km.",glossaryLinks:["tempo en carrera"],tips:[]},
+      {day:"Miércoles",label:"Bici sweet spot + Fuerza",time:"Mañana + tarde",duration:"75 min bici + 20 min fuerza",fc:"Z3–Z4 · 130–145 lpm",description:"2×20 min sweet spot con 10 min Z2 entre ellos. Fuerza: mantenimiento.",glossaryLinks:["sweet spot"],tips:[]},
+      {day:"Jueves",label:"Natación fondo 2500–3000m",time:"Noche",duration:"65 min",fc:"Z2",description:"Nado continuo o en bloques grandes (2×1200m). Acá nadás más para que 1.9km se sienta corto.",glossaryLinks:["series de nado"],tips:[]},
+      {day:"Viernes",label:"Carrera recuperación Z2",time:"Mañana",duration:"50 min",fc:"Z1–Z2",description:"Carrera completamente suave para recuperar. Si estás muy cansado, caminá 30 min.",glossaryLinks:["fondo"],tips:[]},
+      {day:"Sábado",label:"Ladrillo largo",time:"Mañana",duration:"120–150 min bici + 30 min carrera",fc:"Z2–Z3",description:"Bici 80–90km Z2–Z3, transición inmediata a 30 min carrera. Simula la parte más exigente.",glossaryLinks:["ladrillo","Z2 en bici"],tips:["Llevá todo lo que llevarías el día de carrera."]},
+      {day:"Domingo",label:"Descanso total",time:"—",duration:"—",fc:"—",description:"Descanso absoluto. Después del ladrillo del sábado el cuerpo lo necesita.",glossaryLinks:[],tips:[]},
+    ],
+    validate:["Ladrillo 90km + 10km completado","Nado 1900m en < 45 min","Ritmo de carrera objetivo identificado"]},
+  { id:4, name:"Pico y simulacro", weeks:"Sem 33–44", months:"Nov–Ene 2027", color:"#D85A30", light:"#FAECE7",
+    goal:"Semanas de mayor carga. Hacer un simulacro completo del 70.3. Confirmar que el cuerpo aguanta.",
+    why:"El cuerpo necesita haber hecho estas distancias antes. La confianza del simulacro vale tanto como el entrenamiento.",
+    sessions:[
+      {day:"Lunes",label:"Natación fondo 2500–3000m",time:"Mañana",duration:"65 min",fc:"Z2",description:"Nado continuo. Ya debería sentirse cómodo.",glossaryLinks:[],tips:[]},
+      {day:"Martes",label:"Carrera fondo largo",time:"Mañana",duration:"90 min",fc:"Z2 · ~14–16km",description:"La carrera más larga fuera del simulacro. Ritmo cómodo. Gel cada 35–40 min.",glossaryLinks:["fondo"],tips:["Acá es donde más tenta salir rápido. No lo hagas."]},
+      {day:"Miércoles",label:"Bici Z3 con bloques Z4",time:"Mañana",duration:"90 min",fc:"Z3 base · Z4 en bloques",description:"3×15 min Z4 con 8 min Z2 entre cada uno. Calentamiento y enfriamiento amplios.",glossaryLinks:["sweet spot"],tips:[]},
+      {day:"Jueves",label:"Natación técnica + velocidad",time:"Noche",duration:"50 min",fc:"Z2–Z3",description:"1000m técnica + 6×50m a ritmo máximo con 30s pausa.",glossaryLinks:[],tips:[]},
+      {day:"Viernes",label:"Carrera corta suave",time:"Mañana",duration:"40 min",fc:"Z1–Z2",description:"Recuperación activa antes del simulacro.",glossaryLinks:[],tips:[]},
+      {day:"Sábado",label:"SIMULACRO 70.3 completo",time:"Mañana temprano",duration:"1900m nado + 90km bici + 15km carrera",fc:"Ritmo real",description:"El día más importante del plan. Simulá todo: T1, 90km con nutrición, T2, 15km. Usá exactamente lo que usarás el día.",glossaryLinks:["ladrillo"],tips:["Llegá descansado.","Desayuná lo mismo que en la carrera.","Anotá qué funcionó.","No hagas los 21km — 15km alcanzan."]},
+      {day:"Domingo",label:"Descanso total",time:"—",duration:"—",fc:"—",description:"Descanso absoluto. Comé bien, dormí.",glossaryLinks:[],tips:[]},
+    ],
+    validate:["Simulacro completado","Recuperación en < 48 hs","Protocolo de nutrición validado"]},
+  { id:5, name:"Taper y carrera", weeks:"Sem 45–52", months:"Feb–Mar 2027", color:"#534AB7", light:"#EEEDFE",
+    goal:"Reducir volumen 40–60% manteniendo intensidad. Dejar que el cuerpo absorba 11 meses de trabajo.",
+    why:"El taper es donde se gana la carrera. El trabajo ya está hecho. Muchos atletas lo arruinan entrenando de más.",
+    sessions:[
+      {day:"Lunes",label:"Natación suave 1500m",time:"Mañana",duration:"45 min",fc:"Z2 suave",description:"1500m continuos o series largas. Sin esfuerzo.",glossaryLinks:[],tips:[]},
+      {day:"Martes",label:"Carrera suave + aceleraciones",time:"Mañana",duration:"40 min",fc:"Z2 + strides breves",description:"35 min Z2 + 2–3 strides de 20 seg. Mantiene activación neuromuscular sin fatiga.",glossaryLinks:["strides"],tips:[]},
+      {day:"Miércoles",label:"Bici con ritmo de carrera",time:"Mañana",duration:"60 min",fc:"Z2 + 2×10 min Z3",description:"60 min con 2 bloques de 10 min Z3 para recordar el ritmo de carrera.",glossaryLinks:[],tips:[]},
+      {day:"Jueves",label:"Natación técnica 1000m",time:"Noche",duration:"35 min",fc:"Z2 muy suave",description:"Solo técnica. Salís del agua fresco.",glossaryLinks:[],tips:[]},
+      {day:"Viernes",label:"Trote suave 20 min",time:"Mañana",duration:"20 min",fc:"Z1",description:"Solo para moverse y no estar ansioso.",glossaryLinks:[],tips:["Hacelo cerca de donde te alojás si viajaste."]},
+      {day:"Sábado",label:"Bici suave 30 min",time:"Mañana",duration:"30 min",fc:"Z1",description:"Pedaleada suave para soltar las piernas.",glossaryLinks:[],tips:[]},
+      {day:"Domingo",label:"Descanso + logística",time:"—",duration:"—",fc:"—",description:"Revisar transiciones, dejar la bici lista, preparar la bolsa. Cena liviana conocida. Dormir temprano. El nerviosismo es buena señal.",glossaryLinks:[],tips:[]},
+    ],
+    validate:["Llegás descansado (no aburrido)","Piernas frescas","Logística 100% confirmada"]},
+];
+
+// render zones
+document.getElementById('zones').innerHTML = zones.map(z =>
+  `<div class="zone" style="background:${z.color}"><b>${z.z} · ${z.name}</b>${zRange(z)}<br><span style="opacity:.9">${z.desc}</span></div>`
+).join('');
+
+// render phase tabs
+const tabsEl = document.getElementById('phases');
+tabsEl.innerHTML = phases.map(p =>
+  `<button class="phase-tab" data-id="${p.id}" style="--c:${p.color}">F${p.id} · ${p.name}</button>`
+).join('');
+
+let current = 1;
+function renderPhase(id){
+  current = id;
+  document.querySelectorAll('.phase-tab').forEach(b => {
+    const on = +b.dataset.id === id;
+    b.classList.toggle('active', on);
+    const p = phases.find(x => x.id === +b.dataset.id);
+    b.style.background = on ? p.color : '#fff';
+  });
+  const p = phases.find(x => x.id === id);
+  const view = document.getElementById('phaseView');
+  view.innerHTML = `
+    <div class="phase-head" style="background:${p.light};color:${p.color}">
+      <div class="meta">${p.weeks} · ${p.months}</div>
+      <h2>Fase ${p.id}: ${p.name}</h2>
+      <p style="color:#333"><b>Objetivo:</b> ${p.goal}</p>
+      <p style="color:#333"><b>Por qué:</b> ${p.why}</p>
+    </div>
+    ${p.sessions.map(s => `
+      <div class="session">
+        <div class="row">
+          <div>
+            <div class="day">${s.day}</div>
+            <h3>${s.label}</h3>
+          </div>
+          <div class="meta">${s.time}<br>${s.duration}</div>
+        </div>
+        <span class="fc">${s.fc}</span>
+        <p>${s.description}</p>
+        ${s.tips.length ? `<ul class="tips">${s.tips.map(t=>`<li>${t}</li>`).join('')}</ul>` : ''}
+        ${s.glossaryLinks.length ? `<div class="links-row">${s.glossaryLinks.map(g=>`<button class="glink" onclick="openModal('${g}')">${g} ↗</button>`).join('')}</div>` : ''}
+      </div>
+    `).join('')}
+    <div class="validate"><b>Validación de la fase</b><ul>${p.validate.map(v=>`<li>${v}</li>`).join('')}</ul></div>
+  `;
+}
+tabsEl.addEventListener('click', e => {
+  const b = e.target.closest('.phase-tab');
+  if (b) renderPhase(+b.dataset.id);
+});
+renderPhase(1);
+
+function openModal(key){
+  const g = glossary[key];
+  if (!g) return;
+  document.getElementById('modalTitle').textContent = g.title;
+  document.getElementById('modalBody').textContent = g.body;
+  document.getElementById('modalBg').classList.add('open');
+}
+function closeModal(){ document.getElementById('modalBg').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
