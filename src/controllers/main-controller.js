@@ -115,8 +115,15 @@ const mainController = {
     };
     if (amountFormatted) deeplinkData.amount = amountFormatted;
 
-    const deeplink = 'intent://money-out/transfers/new?data=' +
-      encodeURIComponent(JSON.stringify(deeplinkData));
+    const payload = encodeURIComponent(JSON.stringify(deeplinkData));
+    const path = 'money-out/transfers/new?data=' + payload;
+
+    // Android entiende intent://; iOS no, ahi va el scheme propio de la app.
+    const androidLink = 'intent://' + path;
+    const iosLink = 'mercadopago://' + path;
+
+    const isIOS = /iPad|iPhone|iPod/.test(req.get('user-agent') || '');
+    const deeplink = isIOS ? iosLink : androidLink;
 
     const title = amountPretty
       ? `Pagar $${amountPretty} a Juanse Ferrari`
@@ -174,6 +181,8 @@ const mainController = {
     }
     .btn:active { background: #009acd; }
     .hint { margin-top: 14px; font-size: 12px; color: #999; line-height: 1.5; }
+    .fallback { display: none; color: #b3541e; font-weight: 600; }
+    .fallback.show { display: block; }
   </style>
 </head>
 <body>
@@ -194,12 +203,34 @@ const mainController = {
       <button class="copy" data-copy="${ALIAS}">Copiar</button>
     </div>
 
-    <a class="btn" href="${deeplink}">Pagar con Mercado Pago</a>
+    <a class="btn" id="payBtn" href="${deeplink}">Pagar con Mercado Pago</a>
 
-    <p class="hint">El botón abre la app de Mercado Pago${amountPretty ? ' con el monto ya cargado' : ''}. Si no se abre, copiá el alias y transferí desde tu app.</p>
+    <p class="hint" id="hint">El botón abre la app de Mercado Pago${amountPretty ? ' con el monto ya cargado' : ''}. Si no se abre, copiá el alias y transferí desde tu app.</p>
+    <p class="hint fallback" id="fallback">No se pudo abrir Mercado Pago. Copiá el alias de arriba y hacé la transferencia desde la app.</p>
   </div>
 
   <script>
+    // Si el scheme no abre ninguna app, la pagina sigue visible: avisamos que
+    // copien el alias en vez de dejar un boton que aparenta no hacer nada.
+    (function () {
+      var btn = document.getElementById('payBtn');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var t = setTimeout(function () {
+          if (!document.hidden) {
+            document.getElementById('fallback').classList.add('show');
+          }
+        }, 1500);
+        // Si el navegador se va a background, la app abrio: cancelamos el aviso.
+        document.addEventListener('visibilitychange', function cancel() {
+          if (document.hidden) {
+            clearTimeout(t);
+            document.removeEventListener('visibilitychange', cancel);
+          }
+        });
+      });
+    })();
+
     document.querySelectorAll('.copy').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var text = btn.getAttribute('data-copy');
