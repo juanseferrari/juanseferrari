@@ -110,8 +110,8 @@ const mainController = {
 
     const deeplinkData = {
       from: 'clipboard_money_out_mla',
-      account: { alias: { id: CBU, type: 'cbu' } },
-      type: 'cbu'
+      account: { alias: { id: ALIAS, type: 'cvu' } },
+      type: 'cvu'
     };
     if (amountFormatted) deeplinkData.amount = amountFormatted;
 
