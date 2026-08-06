@@ -96,7 +96,7 @@ const mainController = {
   pay: (req, res) => {
     const ALIAS = 'juanseferraribru';
     // El deeplink va por CBU; el alias es solo lo que se muestra para copiar.
-    const CBU = '1430001713000535550016';
+    const CBU = '0000335100000002109354';
 
     // /pay/100 -> monto fijo. /pay -> solo alias, sin monto.
     const raw = (req.params.amount || '').replace(',', '.');
@@ -110,8 +110,8 @@ const mainController = {
 
     const deeplinkData = {
       from: 'clipboard_money_out_mla',
-      account: { alias: { id: CBU, type: 'cbu' } },
-      type: 'cbu'
+      account: { alias: { id: CBU, type: 'cvu' } },
+      type: 'cvu'
     };
     if (amountFormatted) deeplinkData.amount = amountFormatted;
 
