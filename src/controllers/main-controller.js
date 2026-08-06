@@ -120,7 +120,7 @@ const mainController = {
 
     // Android entiende intent://; iOS no, ahi va el scheme propio de la app.
     const androidLink = 'intent://' + path;
-    const iosLink = 'intent://' + path;
+    const iosLink = 'mercadopago://' + path;
 
     const isIOS = /iPad|iPhone|iPod/.test(req.get('user-agent') || '');
     const deeplink = isIOS ? iosLink : androidLink;
