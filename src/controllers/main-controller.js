@@ -108,6 +108,7 @@ const mainController = {
       maximumFractionDigits: 2
     });
 
+    //el deeplink tiene que ser alias y type CVU
     const deeplinkData = {
       from: 'clipboard_money_out_mla',
       account: { alias: { id: ALIAS, type: 'cvu' } },
@@ -135,6 +136,8 @@ const mainController = {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
+  <!-- Favicon emoji inline: no necesita archivo en /public -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="Transferí por Mercado Pago al alias ${ALIAS}">
   <meta property="og:image" content="https://www.juanseferrari.com/images/juanse2.png">
@@ -175,11 +178,17 @@ const mainController = {
     .copy:active { background: #d3d7de; }
     .copy.ok { background: #d5f0dd; color: #17663a; }
     .btn {
-      display: block; margin-top: 20px; padding: 15px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin-top: 20px; padding: 13px;
       background: #00b1ea; color: #fff; border-radius: 10px;
       font-size: 16px; font-weight: 600; text-decoration: none;
     }
     .btn:active { background: #009acd; }
+    /* El PNG no tiene transparencia, va sobre un circulo blanco. */
+    .btn img {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #fff; flex-shrink: 0;
+    }
     .hint { margin-top: 14px; font-size: 12px; color: #999; line-height: 1.5; }
     .fallback { display: none; color: #b3541e; font-weight: 600; }
     .fallback.show { display: block; }
@@ -203,7 +212,10 @@ const mainController = {
       <button class="copy" data-copy="${ALIAS}">Copiar</button>
     </div>
 
-    <a class="btn" id="payBtn" href="${deeplink}">Pagar con Mercado Pago</a>
+    <a class="btn" id="payBtn" href="${deeplink}">
+      <img src="/images/mercadopago.png" alt="" width="26" height="26">
+      <span>Pagar con Mercado Pago</span>
+    </a>
 
     <p class="hint" id="hint">El botón abre la app de Mercado Pago${amountPretty ? ' con el monto ya cargado' : ''}. Si no se abre, copiá el alias y transferí desde tu app.</p>
     <p class="hint fallback" id="fallback">No se pudo abrir Mercado Pago. Copiá el alias de arriba y hacé la transferencia desde la app.</p>
