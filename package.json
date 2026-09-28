@@ -9,7 +9,11 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test src/training/",
+    "plan:generate": "node scripts/generate-plan.js",
+    "plan:seed": "node scripts/seed-plan.js",
+    "strava:backfill": "node scripts/backfill-strava.js",
+    "strava:subscription": "node scripts/strava-subscription.js"
   },
   "keywords": [],
   "author": "",
