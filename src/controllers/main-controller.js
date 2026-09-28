@@ -1,7 +1,3 @@
-// Requires
-const path = require("path");
-
-
 const mainController = {
   home: (req, res) => {
     // Send HTML response with Open Graph meta tags
@@ -89,9 +85,6 @@ const mainController = {
      </html>
    `);
 
-  },
-  training: (req,res) => {
-    res.sendFile(path.join(__dirname, '..', 'ironman', 'index.html'));
   },
   pay: (req, res) => {
     const ALIAS = 'juanseferraribru';
