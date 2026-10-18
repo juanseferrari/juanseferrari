@@ -20,11 +20,13 @@ scripts/generate-plan.js         genera el JSON desde plan-config.js
 scripts/seed-plan.js             carga el JSON en la DB (upsert por id)
 scripts/backfill-strava.js       trae actividades históricas
 scripts/strava-subscription.js   crea / lista / borra el webhook
+scripts/adopt-strava-tokens.js   guarda en la DB un par de tokens que ya tenías
 
 src/training/plan-config.js      TODAS las constantes editables del plan
 src/training/matching.js         cruce plan ↔ actividades (función pura, con tests)
 src/training/strava.js           OAuth, refresh, rate limit
-src/training/sync.js             backfill / webhook / cron comparten esto
+src/training/sync.js             backfill / webhook / autosync comparten esto
+src/training/autosync.js         resync en segundo plano al entrar a la página
 src/training/queries.js          acceso a Supabase
 src/training/layout.js           estilos y layout compartido
 src/training/dates.js            fechas como string, sin líos de UTC
@@ -51,7 +53,7 @@ src/routes/training-route.js             todas las rutas
 | `POST /api/training/backfill` | 🔒 | trae actividades históricas |
 | `GET /api/strava/webhook` | — | verificación (`hub.challenge`) |
 | `POST /api/strava/webhook` | — | eventos de actividad |
-| `GET /api/training/cron/sync` | `CRON_SECRET` | resync de los últimos 7 días |
+| `GET /api/training/cron/sync` | `CRON_SECRET` | resync manual (opcional: ya lo hace el autosync) |
 
 ---
 
@@ -163,14 +165,42 @@ heroku run npm run strava:backfill
 
 También está el botón en `/training/connect`.
 
-## Cron nocturno
+### Si ya tenés tokens de antes
 
-Red de seguridad por si se pierde un webhook: re-sincroniza los últimos 7
-días. Con Heroku Scheduler, todos los días a la madrugada:
+El camino normal es `/training/connect` (hace el OAuth y guarda todo solo).
+Si ya tenés un refresh token con scope `activity:read_all`:
 
 ```sh
-curl -s "https://www.juanseferrari.com/api/training/cron/sync?secret=$CRON_SECRET"
+heroku config:set STRAVA_REFRESH_TOKEN='...'
+heroku run npm run strava:adopt
 ```
+
+Los tokens **tienen que vivir en la tabla `strava_tokens`**, no en config
+vars: el access token vence cada 6 h y la app lo renueva sola escribiendo en
+la DB, cosa que no puede hacer con una variable de entorno.
+
+## Cómo se mantiene al día
+
+Tres capas, de más a menos inmediata:
+
+1. **Webhook** — cuando terminás una actividad, Strava le avisa a la app en
+   segundos y aparece sola. Es el camino normal.
+2. **Autosync** — al entrar a `/training`, `/training/month` o
+   `/training/stats`, si hace más de 6 h que no sincronizamos, se dispara un
+   resync de los últimos 7 días **en segundo plano**. No frena la página.
+   Es la red de seguridad por si se perdió un evento del webhook.
+3. **Endpoint de cron** (opcional, nadie lo llama hoy) — por si alguna vez
+   conviene un Scheduler de verdad:
+   ```sh
+   curl -s "https://www.juanseferrari.com/api/training/cron/sync?secret=$CRON_SECRET"
+   ```
+
+El autosync está en `src/training/autosync.js`. Tiene lock para que recargar
+diez veces no dispare diez syncs, y si Strava falla lo loguea y sigue: nunca
+rompe la vista. El umbral de 6 h es `MIN_INTERVAL_MS`.
+
+Como el dyno de Heroku se duerme, el "hace cuánto" se guarda en la DB
+(`sync_state`), no en memoria.
 
 ---
 
@@ -215,6 +245,9 @@ npm test
 Cubren rodillo sin distancia, dos trotes el mismo día, sesión movida, brick
 (con y sin transición), actividad no deportiva, `EBikeRide`, los tres tipos
 de override, umbrales, y que una actividad no se cuente dos veces.
+
+También el autosync: que respete el intervalo, que diez visitas seguidas
+disparen un solo sync, y que un fallo de Strava no rompa la página.
 
 ---
 

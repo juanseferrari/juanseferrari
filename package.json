@@ -13,7 +13,8 @@
     "plan:generate": "node scripts/generate-plan.js",
     "plan:seed": "node scripts/seed-plan.js",
     "strava:backfill": "node scripts/backfill-strava.js",
-    "strava:subscription": "node scripts/strava-subscription.js"
+    "strava:subscription": "node scripts/strava-subscription.js",
+    "strava:adopt": "node scripts/adopt-strava-tokens.js"
   },
   "keywords": [],
   "author": "",

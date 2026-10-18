@@ -1,0 +1,9 @@
+# Secretos locales: nunca al repo.
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# dependencias
+node_modules/

@@ -6,6 +6,7 @@ const strava = require('../controllers/strava-controller');
 const authCtl = require('../controllers/auth-controller');
 const { attachUser, requireAuth, requireCronSecret } = require('../middleware/auth');
 const sync = require('../training/sync');
+const { autosyncMiddleware } = require('../training/autosync');
 
 // El webhook de Strava manda JSON y tiene que contestar rapido: va antes de
 // cualquier middleware que consulte la DB.
@@ -16,9 +17,13 @@ router.post('/api/strava/webhook', express.json(), strava.webhookEvent);
 router.use(attachUser);
 
 // --- vistas públicas de solo lectura
-router.get('/training', training.week);
-router.get('/training/month', training.month);
-router.get('/training/stats', training.stats);
+//
+// autosync dispara un resync en segundo plano si hace +6 h que no
+// sincronizamos. No bloquea la respuesta. Es la red de seguridad por si se
+// pierde un evento del webhook; reemplaza al cron nocturno.
+router.get('/training', autosyncMiddleware, training.week);
+router.get('/training/month', autosyncMiddleware, training.month);
+router.get('/training/stats', autosyncMiddleware, training.stats);
 router.get('/training/guia', training.guia);
 router.get('/api/training/session/:id', training.sessionDetail);
 
@@ -42,7 +47,8 @@ router.post('/api/training/backfill', requireAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// --- cron nocturno (Heroku Scheduler): re-sincroniza los últimos 7 días.
+// --- cron (opcional): lo mismo que hace autosync, pero disparable desde
+// afuera. Queda por si alguna vez conviene un Scheduler de verdad.
 router.get('/api/training/cron/sync', requireCronSecret, async (req, res, next) => {
   try {
     const days = Number(req.query.days) || 7;
