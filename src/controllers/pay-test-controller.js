@@ -3,6 +3,8 @@
 // No tiene links desde ningun lado; borrarla cuando encontremos la variante.
 
 const ALIAS = 'juanseferraribru';
+// Mismo numero que la constante CBU de main-controller.pay.
+const CVU = '0000335100000002109354';
 const ANDROID_INTENT_SUFFIX = '#Intent;scheme=mercadopago;package=com.mercadopago.wallet;end';
 
 const esc = (s) => String(s)
@@ -16,6 +18,7 @@ function buildVariants(amount) {
     account: { alias: { id: ALIAS, type: 'cvu' } },
     type: 'cvu'
   });
+  const withCvu = () => ({ ...base(), account: { alias: { id: CVU, type: 'cvu' } } });
   const path = (data, extra = '') =>
     'money-out/transfers/new?data=' + encodeURIComponent(JSON.stringify(data)) + extra;
   const intent = (p) => 'intent://' + p + ANDROID_INTENT_SUFFIX;
@@ -36,7 +39,15 @@ function buildVariants(amount) {
     { id: 'G', desc: 'amount con coma: "100,00"',
       href: intent(path({ ...base(), amount: fixed.replace('.', ',') })) },
     { id: 'H', desc: 'mercadopago:// directo (igual que iOS), sin intent',
-      href: 'mercadopago://' + path({ ...base(), amount: fixed }) }
+      href: 'mercadopago://' + path({ ...base(), amount: fixed }) },
+    // Talo Pay arma exactamente este link: mismo JSON, pero con el numero de
+    // CVU en account.alias.id en vez del alias.
+    { id: 'I', desc: 'Formato Talo: número de CVU en vez de alias, amount "100.00"',
+      href: intent(path({ ...withCvu(), amount: fixed })) },
+    { id: 'J', desc: 'CVU en vez de alias, amount como número: 100',
+      href: intent(path({ ...withCvu(), amount })) },
+    { id: 'K', desc: 'Alias con type "alias" (en vez de "cvu")',
+      href: intent(path({ ...base(), account: { alias: { id: ALIAS, type: 'alias' } }, type: 'alias', amount: fixed })) }
   ];
 }
 
