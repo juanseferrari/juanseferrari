@@ -113,7 +113,11 @@ const mainController = {
     const path = 'money-out/transfers/new?data=' + payload;
 
     // Android entiende intent://; iOS no, ahi va el scheme propio de la app.
-    const androidLink = 'intent://' + path;
+    // El intent necesita el fragmento #Intent;...;end: sin scheme Chrome no sabe
+    // a que app mandarlo y no hace nada. El package fuerza la app de Mercado Pago
+    // (si no esta instalada, Chrome abre su ficha en Play Store).
+    const androidLink = 'intent://' + path +
+      '#Intent;scheme=mercadopago;package=com.mercadopago.wallet;end';
     const iosLink = 'mercadopago://' + path;
 
     const isIOS = /iPad|iPhone|iPod/.test(req.get('user-agent') || '');
